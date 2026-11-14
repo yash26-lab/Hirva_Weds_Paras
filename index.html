@@ -629,6 +629,39 @@ footer p { margin: 0; }
   box-shadow: inset 0 0 0 1.5px var(--gold);
 }
 
+/* ---------- Music button ---------- */
+.music {
+  position: fixed;
+  left: max(16px, env(safe-area-inset-left, 0px));
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 1.1rem 0.7rem 0.8rem;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--velvet-0);
+  background: var(--foil);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--gold-line);
+}
+.music svg { width: 18px; height: 18px; flex: none; }
+.music .i-pause { display: none; }
+.music.on .i-play { display: none; }
+.music.on .i-pause { display: block; }
+.music.on { animation: musicpulse 2.4s ease-in-out infinite; }
+@keyframes musicpulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--gold-line), 0 0 0 0 rgba(255, 241, 191, 0.45); }
+  50% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--gold-line), 0 0 0 9px rgba(255, 241, 191, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .music.on { animation: none; } }
+
 /* ---------- Added elements ---------- */
 .auspicious {
   background-color: var(--velvet-0);
@@ -1134,6 +1167,13 @@ footer .names-line {
   </div>
 </footer>
 
+<audio id="bgm" src="song.mp3" preload="none" loop></audio>
+<button type="button" class="music" id="music-btn" aria-pressed="false" aria-label="Play music">
+  <svg class="i-play" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M7 3.5v13l10-6.5z" fill="currentColor"/></svg>
+  <svg class="i-pause" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M5 3.5h4v13H5zM11 3.5h4v13h-4z" fill="currentColor"/></svg>
+  <span id="music-label">Play music</span>
+</button>
+
 <a class="fab" id="rsvp-fab" href="#rsvp-h">RSVP</a>
 
 <script>
@@ -1345,6 +1385,29 @@ footer .names-line {
       status.textContent = 'WhatsApp should open in a new tab. Send the message to confirm your RSVP.';
     }
   });
+  // ---- Music button ----
+  var bgm = document.getElementById('bgm');
+  var mbtn = document.getElementById('music-btn');
+  var mlabel = document.getElementById('music-label');
+  function setMusic(on) {
+    mbtn.classList.toggle('on', on);
+    mbtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    mbtn.setAttribute('aria-label', on ? 'Pause music' : 'Play music');
+    mlabel.textContent = on ? 'Pause' : 'Play music';
+  }
+  bgm.volume = 0.6;
+  mbtn.addEventListener('click', function () {
+    if (bgm.paused) {
+      var pr = bgm.play();
+      setMusic(true);
+      if (pr && pr.catch) pr.catch(function () { setMusic(false); mlabel.textContent = 'Music unavailable'; });
+    } else {
+      bgm.pause();
+      setMusic(false);
+    }
+  });
+  bgm.addEventListener('error', function () { setMusic(false); mlabel.textContent = 'Music unavailable'; });
+
   // ---- Floating RSVP button ----
   var fab = document.getElementById('rsvp-fab');
   var rsvpHead = document.getElementById('rsvp-h');
